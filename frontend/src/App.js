@@ -22,6 +22,8 @@ const { SystemProgram } = web3;
 
 const App = () => {
   const [walletAddress, setWalletAddress] = useState(null);
+  const [campaings, setCampaigns] = useState([]);
+
   const getProvider = () => {
     const connection = new Connection(network, opts.preflightCommitment)
     const provider = new AnchorProvider(
@@ -31,6 +33,7 @@ const App = () => {
     );
     return provider;
   }
+  
   const checkIfWalletIsConnected = async () => {
     try {
       const { solana } = window;
@@ -61,6 +64,14 @@ const App = () => {
     }
   };
 
+ const getCampaigns = async () => {
+  const connection = new Connection(network, opts.preflightCommitment)
+  const provider = getProvider();
+  const program = new Program(idl, programID, provider);
+  const _accounts = await connection.getProgramAccounts(programID)
+  console.log("accounts", _accounts)
+ };
+
   const createCampaing = async () => {
     try {
       const provider = getProvider();
@@ -71,16 +82,17 @@ const App = () => {
       ],
         program.programId
       );
-      await program.methods.create("campaign name", "campaign description", {
+      console.log("campaing creating...", campaing)
+      program.methods.create("campaign name", "campaign description", {
         accounts: {
-          campaing: campaing,
+          campaing,
           user: provider.wallet.publicKey,
           systemProgram: SystemProgram.programId,
         }
       });
       console.log(
         "Created a new campaign with address: ",
-        campaing
+        campaing.toString()
       )
     } catch (error) {
       console.error('Error creating campaing account', error)
@@ -91,9 +103,29 @@ const App = () => {
     <button onClick={connectWallet}>Connect to wallet</button>
   )
 
+  
   const renderConnectedContainer = () => (
-    <button onClick={createCampaing}>Created campaign</button>
-  )
+  <>
+    <button onClick={createCampaing}>Create campaign</button>
+    <button onClick={getCampaigns}>Get a list of campaings</button>
+    <br/>
+    {campaings.map((campaign) => (
+      <>
+        <p>Campaign ID: {campaign.pubkey.toString()}</p>
+        <p>
+          Balance:{" "}
+          {(
+            campaign.amountDonated / web3.LAMPORTS_PER_SOL
+          ).toString()}
+          </p>
+          <p>campaign.name</p>
+          <p>Campaign.description</p>
+          <br/>
+        </>
+    ))}
+    </>
+  );
+
 
   useEffect(() => {
     const onLoad = async () => {

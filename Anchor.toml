@@ -5,9 +5,6 @@ skip-lint = false
 [programs.localnet]
 crowdfunding = "7a31VrV3Eecvbi65JZuiixpp4ANC6ac2nQnmG5HZ2Gtt"
 
-[registry]
-url = "https://api.apr.dev"
-
 [provider]
 cluster = "devnet"
 wallet = "./id.json"
