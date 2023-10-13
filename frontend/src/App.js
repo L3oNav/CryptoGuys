@@ -1,6 +1,7 @@
 
 import './App.css';
 import idl from "./idl.json";
+import campaign_data from './data.json'
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import {
   Program,
@@ -78,7 +79,7 @@ const App = () => {
       });
       console.log("Donated some money to: ", publicKey.toString());
     } catch (e) {
-      console.error("Error donating: ", error)
+      console.error("Error donating: ", e)
     }
   }
 
@@ -86,13 +87,16 @@ const App = () => {
     const connection = new Connection(network, opts.preflightCommitment)
     const provider = getProvider();
     const program = new Program(idl, programID, provider);
-    Promise.all(await connection.getProgramAccounts(idl, programID, provider).map(
+    Promise.all(
+      (await connection.getProgramAccounts(programID)).map(
         async (campaign) => ({
           ...(await program.account.campaign.fetch(campaign.publicKey)),
           publickey: campaign.publicKey
         })
       )
-    ).then((campaings) => setCampaigns(campaings));
+    ).then((campaings) => {
+      if(campaings) setCampaigns(campaings)
+      else setCampaigns(campaign_data)});
   };
 
   const createCampaing = async () => {
@@ -134,12 +138,9 @@ const App = () => {
     <br/>
     {campaings.map((campaign) => (
       <>
-        <p>Campaign ID: {campaign.pubkey.toString()}</p>
+        <p>Campaign ID: {campaign.campaings}</p>
         <p>
           Balance:{" "}
-          {(
-            campaign.amountDonated / web3.LAMPORTS_PER_SOL
-          ).toString()}
           </p>
           <p>campaign.name</p>
           <p>Campaign.description</p>
