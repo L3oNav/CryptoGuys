@@ -53,6 +53,7 @@ const App = () => {
       console.log(error)
     }
   };
+
   const connectWallet = async () => {
     const { solana } = window;
     if (solana) {
@@ -64,13 +65,35 @@ const App = () => {
     }
   };
 
- const getCampaigns = async () => {
-  const connection = new Connection(network, opts.preflightCommitment)
-  const provider = getProvider();
-  const program = new Program(idl, programID, provider);
-  const _accounts = await connection.getProgramAccounts(programID)
-  console.log("accounts", _accounts)
- };
+  const donate = async (publicKey) => {
+    try{
+      const provider = getProvider();
+      const program = new Program(idl, programID, provider);
+      await program.methods.donate(new BN(0.2 * web3.LAMPORTS_PER_SOL), {
+        accounts: {
+          compaign: publicKey,
+          user: provider.wallet.publicKey,
+          SystemProgram: SystemProgram.programId
+        }
+      });
+      console.log("Donated some money to: ", publicKey.toString());
+    } catch (e) {
+      console.error("Error donating: ", error)
+    }
+  }
+
+  const getCampaigns = async () => {
+    const connection = new Connection(network, opts.preflightCommitment)
+    const provider = getProvider();
+    const program = new Program(idl, programID, provider);
+    Promise.all(await connection.getProgramAccounts(idl, programID, provider).map(
+        async (campaign) => ({
+          ...(await program.account.campaign.fetch(campaign.publicKey)),
+          publickey: campaign.publicKey
+        })
+      )
+    ).then((campaings) => setCampaigns(campaings));
+  };
 
   const createCampaing = async () => {
     try {
@@ -121,6 +144,9 @@ const App = () => {
           <p>campaign.name</p>
           <p>Campaign.description</p>
           <br/>
+          <button onClick={()=> donate(campaign.pubkey)}>
+            Donate!
+          </button>
         </>
     ))}
     </>
